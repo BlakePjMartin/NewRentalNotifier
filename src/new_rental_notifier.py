@@ -161,9 +161,8 @@ class NewRentalNotifier:
         rent = re.search("\d+", cur_element.getText().replace(".", "")).group()
         listing_dict['rent'] = int(rent)
 
-        cur_element = cur_element.next_sibling
-        while cur_element:
-            cur_text = cur_element.getText().replace(".", "")
+        for element in cur_element:
+            cur_text = str(element).replace(".", "")
             if re.search("Condo", cur_text):
                 formatted_val = re.search("\d+", cur_text)
                 if formatted_val:
@@ -174,8 +173,6 @@ class NewRentalNotifier:
                 if formatted_val:
                     formatted_val = formatted_val.group()
                     listing_dict['iptu'] = int(formatted_val)
-
-            cur_element = cur_element.next_sibling
 
         return listing_dict
 
