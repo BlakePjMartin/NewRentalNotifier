@@ -7,7 +7,6 @@ from texter import texter
 
 # Define the parameters for acceptable rentals.
 domain = 'https://www.imovelweb.com.br'
-city = 'indaiatuba-sp'
 min_price = 5_000
 max_price = 8_000
 min_bedrooms = 0
@@ -15,13 +14,13 @@ min_bathrooms = 0  # regular and en-suite combined
 min_total_area = 500
 
 
-def scrape_for_rentals():
+def scrape_for_rentals(city):
     """Search ImovelWeb for all available listings with the given parameters."""
-    previously_seen_listings = load_seen_listings()
-    available_listings = search_available_listings(previously_seen_listings)
-    add_seen_listings(available_listings)
+    previously_seen_listings = load_seen_listings(city)
+    available_listings = search_available_listings(city, previously_seen_listings)
+    add_seen_listings(city, available_listings)
     filtered_listings = filter_available_listings(available_listings)
-    text_listings(filtered_listings)
+    text_listings(city, filtered_listings)
 
     for listing in filtered_listings:
         print(listing)
@@ -31,14 +30,14 @@ def scrape_for_rentals():
     file.close()
 
 
-def add_seen_listings(newly_available_listings):
+def add_seen_listings(city, newly_available_listings):
     """Adds the newly found listings to the list of already seen listings."""
     with open(f"{city}.txt", 'a') as file:
         for listing in newly_available_listings:
             file.write(f"{listing['id']}\n")
 
 
-def load_seen_listings():
+def load_seen_listings(city):
     """Loads from file the listing IDs that have already been seen."""
     # If the file does not exist, create it and return an empty list.
     file_name = f"{city}.txt"
@@ -60,7 +59,7 @@ def load_seen_listings():
     return prev_ids
 
 
-def text_listings(listings):
+def text_listings(city, listings):
     """Sends a text with the link to each of the listings given."""
     # Check if there are any new listings.
     if not listings:
@@ -128,7 +127,7 @@ def filter_available_listings(available_listings):
     return filtered_listings
 
 
-def search_available_listings(previously_seen_listings):
+def search_available_listings(city, previously_seen_listings):
     """Search the main page for all current listings and only filter out those that have been seen before."""
     # The final list of results that will be returned.
     new_available_listings = []
@@ -228,12 +227,15 @@ def scrape_listing_page(url, previously_seen_listings):
     while cur_element:
         cur_text = cur_element.getText().replace(".", "")
         if re.search("Condo", cur_text):
-            formatted_val = re.search("\d+", cur_text).group()
-            listing_dict['condo_fee'] = int(formatted_val)
+            formatted_val = re.search("\d+", cur_text)
+            if formatted_val:
+                formatted_val = formatted_val.group()
+                listing_dict['condo_fee'] = int(formatted_val)
         elif re.search("IPTU", cur_text):
-
-            formatted_val = re.search("\d+", cur_text).group()
-            listing_dict['iptu'] = int(formatted_val)
+            formatted_val = re.search("\d+", cur_text)
+            if formatted_val:
+                formatted_val = formatted_val.group()
+                listing_dict['iptu'] = int(formatted_val)
 
         cur_element = cur_element.next_sibling
 
@@ -241,4 +243,10 @@ def scrape_listing_page(url, previously_seen_listings):
 
 
 if __name__ == '__main__':
-    scrape_for_rentals()
+    cities = [
+        'indaiatuba-sp',
+        'valinhos-sp',
+        'vinhedo-sp',
+    ]
+    for city in cities:
+        scrape_for_rentals(city)
