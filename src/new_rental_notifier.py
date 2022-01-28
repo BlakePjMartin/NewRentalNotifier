@@ -12,8 +12,8 @@ class NewRentalNotifier:
     def __init__(self, city):
         """Set the class parameters and start the searching process."""
         # Search requirements for a new listing.
-        self.min_price = 5_000
-        self.max_price = 8_000
+        self.min_price = 5_000  # this is the minimum price for the rent alone
+        self.max_price = 8_000  # this is the maximum price for the combination of rent/condo/IPTU
         self.min_bedrooms = 0
         self.min_bathrooms = 0  # regular and en-suite combined
         self.min_total_area = 500
@@ -191,13 +191,18 @@ class NewRentalNotifier:
         # Copy all the listings and remove from this new copy anything that does not meet the requirements.
         self.filtered_listings = self.available_listings[:]
         for listing in self.available_listings:
-            # Check the total price.
+            # Check the base rent price.
             total_rent = listing['rent']
+            if total_rent < self.min_price:
+                self.filtered_listings.remove(listing)
+                continue
+
+            # Check the total rent price (rent + condo + IPTU)
             if 'condo_fee' in listing:
                 total_rent += listing['condo_fee']
             if 'iptu' in listing:
                 total_rent += listing['iptu']
-            if total_rent < self.min_price or total_rent > self.max_price:
+            if total_rent > self.max_price:
                 self.filtered_listings.remove(listing)
                 continue
 
